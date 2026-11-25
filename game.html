@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Night of the Mutant Cat: Daily</title>
+<style>
+:root{ --panel:#241d2b; --gold:#e8b44a; --red:#d9503f; --mint:#5fd0a8; --paper:#f3ead9; }
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{
+  background:#0d0a10; color:var(--paper);
+  font-family:"Courier New",monospace; font-size:14px;
+  display:flex; align-items:center; justify-content:center; padding:12px;
+}
+#game{ width:min(1000px,100%); background:var(--panel); border:3px solid #000; box-shadow:0 0 0 3px #3b3049, 0 18px 50px #000a; display:flex; flex-direction:column; }
+#topbar{ display:flex; align-items:center; gap:10px; padding:8px 10px; background:linear-gradient(#332a3d,#241d2b); border-bottom:3px solid #000; }
+#title{font-weight:bold; letter-spacing:2px; color:var(--gold); font-size:13px; white-space:nowrap}
+#title small{display:block; color:#8d7fa0; letter-spacing:1px; font-size:9px; font-weight:normal}
+#roomname{margin-left:auto; color:#a99cbb; font-size:11px; letter-spacing:2px}
+#hintBtn{ background:#3a2f47; color:var(--gold); border:2px solid #000; cursor:pointer; font-family:inherit; font-size:11px; padding:4px 8px; font-weight:bold; }
+#hintBtn:hover{background:#4a3c59}
+#crew{display:flex; gap:6px; padding:6px 10px 0; background:#1b1522}
+.crewbtn{ flex:1; display:flex; align-items:center; gap:8px; cursor:pointer; background:#241d2b; border:2px solid #000; border-bottom:none; padding:5px 8px; color:#a99cbb; font-family:inherit; font-size:11px; text-align:left; }
+.crewbtn .nm{font-weight:bold; letter-spacing:1px}
+.crewbtn .ab{display:block; font-size:9px; color:#7d6f90}
+.crewbtn.on{background:var(--gold); color:#221b2b}
+.crewbtn.on .ab{color:#5a4a2a}
+.crewbtn svg{width:24px;height:30px;flex:none}
+#scene{position:relative; background:#000; border-top:3px solid #000; border-bottom:3px solid #000}
+#stage{display:block; width:100%; height:auto; image-rendering:pixelated; shape-rendering:crispEdges; background:#000}
+#stage .hs{cursor:pointer}
+#stage .hs:hover{filter:brightness(1.22)}
+#stage .glow{opacity:0; transition:opacity .12s}
+#stage .hs:hover .glow{opacity:.5}
+#log{ min-height:64px; padding:7px 12px; background:#1b1522; color:var(--gold); border-bottom:3px solid #000; font-size:12.5px; line-height:1.4; }
+#log em{color:#8d7fa0; font-style:normal; display:block; margin-top:4px; font-size:11.5px}
+#sentence{padding:6px 12px; background:#120e17; color:#cdbfdd; font-size:12px; min-height:26px}
+#sentence b{color:var(--gold)}
+#verbs{display:flex; flex-wrap:wrap; gap:5px; padding:8px 10px; background:#241d2b}
+.verb{ background:#372c45; color:var(--paper); border:2px solid #000; cursor:pointer; font-family:inherit; font-size:11px; font-weight:bold; padding:6px 9px; letter-spacing:1px; }
+.verb:hover{background:#4a3c59}
+.verb.sel{background:var(--gold); color:#221b2b}
+.verb.ability{background:#33455c}
+.verb.ability.sel{background:var(--mint); color:#10221b}
+#bottom{display:flex; gap:10px; padding:8px 10px 10px; background:#1b1522; border-top:3px solid #000}
+#invwrap{flex:1}
+#invlabel{font-size:9px; color:#7d6f90; letter-spacing:2px; margin-bottom:4px}
+#inv{display:flex; flex-wrap:wrap; gap:6px; min-height:48px}
+.slot{ width:48px;height:48px;background:#241d2b;border:2px solid #000; display:flex;align-items:center;justify-content:center;cursor:pointer; }
+.slot:hover{border-color:var(--gold)}
+.slot.sel{border-color:var(--mint); box-shadow:0 0 0 2px var(--mint) inset}
+.slot svg{width:32px;height:32px}
+#meter{width:150px; text-align:right; font-size:10px; color:#7d6f90}
+#bar{height:9px; background:#241d2b; border:2px solid #000; margin-top:5px; overflow:hidden}
+#barfill{height:100%; width:0%; background:linear-gradient(90deg,var(--mint),var(--gold),var(--red)); transition:width .4s}
+#overlay{position:fixed; inset:0; background:#050409ee; display:none; align-items:center; justify-content:center; padding:20px; z-index:9}
+#overlay.on{display:flex}
+#card{max-width:600px; background:var(--panel); border:3px solid var(--gold); padding:26px; text-align:center; box-shadow:0 0 0 4px #000}
+#card h1{margin:0 0 10px; color:var(--gold); font-size:20px; letter-spacing:2px}
+#card p{color:#cdbfdd; line-height:1.55; font-size:13px}
+#card button{ margin-top:16px; background:var(--gold); color:#221b2b; border:3px solid #000; font-family:inherit; font-weight:bold; padding:10px 18px; cursor:pointer; letter-spacing:1px; }
+#card .lang{background:#33455c; color:var(--paper); margin:0 6px}
+#card .lang:hover{background:var(--mint); color:#10221b}
+#card .cast{display:flex; gap:10px; justify-content:center; margin:14px 0 4px}
+#card .cast div{background:#1b1522; border:2px solid #000; padding:8px; width:33%; font-size:11px; color:#a99cbb}
+#card .cast b{display:block; color:var(--gold); letter-spacing:1px; margin-bottom:3px}
+</style>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@near-wallet-selector/modal-ui@9/styles.css">
+</head>
+<body>
+<div id="game">
+  <div id="topbar">
+    <div id="title"><span id="tTitle">NIGHT OF THE MUTANT CAT</span><small id="tSub"></small></div>
+    <button id="hintBtn">💡 <span id="tHint">HINT</span></button>
+    <div id="roomname"></div>
+  </div>
+  <div id="crew"></div>
+  <div id="scene"><svg id="stage" viewBox="0 0 320 200" preserveAspectRatio="xMidYMid meet"></svg></div>
+  <div id="log"></div>
+  <div id="sentence"></div>
+  <div id="verbs"></div>
+  <div id="bottom">
+    <div id="invwrap">
+      <div id="invlabel"></div>
+      <div id="inv"></div>
+    </div>
+    <div id="meter"><span id="tMeter"></span><div id="bar"><div id="barfill"></div></div></div>
+  </div>
+</div>
+<div id="daily"></div>
+<div id="overlay" class="on"><div id="card"></div></div>
+
+<script>
+/* ======================= TEXTS ======================= */
+const T = {
+en: {
+  title:"NIGHT OF THE MUTANT CAT", sub:"a flat, three humans, one enormous problem",
+  hint:"HINT", meter:"THE CAT", invlabel:"INVENTORY (click an item, then a target)",
+  verbs:{WALK:"WALK",LOOK:"LOOK",TAKE:"TAKE",USE:"USE",OPEN:"OPEN",TALK:"TALK"},
+  ab:{wes:"HACK",tank:"LIFT",vic:"CALM"},
+  walkHint:" — click the floor or a door",
+  crew:{ wes:["WES","Hacks","reads manuals for fun"], tank:["TANK","Lifts","moves heavy things, including himself"], vic:["DR. VIC","Calms","vet student, endless patience"] },
+  start:`<h1>NIGHT OF THE MUTANT CAT</h1>
+    <p>The cat drank from the fish tank four hours ago. It has been growing ever since, and now it fills the doorway of the living room, calm and enormous and entirely unbothered.</p>
+    <p>The three of you have one freezer, one evening, and no plan.</p>
+    <div class="cast">
+      <div><b>WES</b>hacks things</div><div><b>TANK</b>lifts things</div><div><b>DR. VIC</b>calms animals</div>
+    </div>
+    <p style="font-size:11px;color:#8d7fa0">Nobody can do anyone else's job. That is the whole game. Click a verb, then click the thing.</p>
+    <button class="lang" data-lang="en">PLAY IN ENGLISH</button><button class="lang" data-lang="es">JUGAR EN ESPAÑOL</button>`,
+  intro:"It did not take long. The flat is warm, the tank glows green, and something the size of a labrador is already pulling itself out of the water.",
+  rooms:{
+    living:{n:"THE LIVING ROOM", d:"The sofa has three dents and the television is showing a menu nobody chose. Between the sofa and the window, the fish tank ticks and bubbles — and the cat that drank from it takes up more floor than it did ten minutes ago."},
+    hall:{n:"THE HALLWAY", d:"Three doors and a strip of carpet worn into a path. The fuse box sits high on the wall, breaker down, and the flat holds the particular silence of things that have stopped working."},
+    kitchen:{n:"THE KITCHEN", d:"Cold tiles, a sink with two mugs in it, and a pantry that hasn't been properly closed since spring. The freezer chest squats against the far wall under a lid of solid frost."},
+    bathroom:{n:"THE BATHROOM", d:"Small, blue, tiled to shoulder height. A mirror you avoid, a tub you don't use, and a hair dryer hanging by its own cable like it's thinking about it."}
+  },
+  hs:{
+    beast:"the cat", tank:"fish tank", sofa:"sofa", laptop:"Wes's laptop", vacuum:"robot vacuum", doorL:"hallway",
+    fuse:"fuse box", doorLiv:"living room", doorKit:"kitchen", doorBath:"bathroom",
+    pantry:"pantry", freezer:"freezer", sink:"sink", doorHall:"hallway",
+    dryer:"hair dryer", outlet:"wall outlet", mirror:"mirror", tub:"bathtub"
+  },
+  look:{
+    beast:"It watches you the way weather watches a picnic. Somewhere under all that fur is the animal that used to fit on a cushion.",
+    beastGone:"Gone into the kitchen. You can hear it breathing on the tiles.",
+    tank:"The tank it drank from. Empty, green, still faintly radioactive. Two survivors circle the bottom, keeping their opinions to themselves.",
+    sofa:"Three dents in the cushions, one per person, assigned years ago and never renegotiated.",
+    laptop:"Wes's laptop. Still open, still warm, still showing the same half-finished spreadsheet.",
+    vacuum:"Rosie, dead on her dock. Wes named her. Wes is the reason she has a name.",
+    fuse:"The main breaker, down, screwed to the wall a good foot above Tank's head. Somebody has written DO NOT on it in pencil.",
+    pantry:"Tins, dry food, and the tuna at the back behind the lentils, where someone hid it from someone else.",
+    freezer:"The lid is iced shut — a full two fingers of frost around the seal. It would need real heat, not scraping.",
+    freezerOpen:"Open, cold, blowing a thin fog across the tiles.",
+    sink:"Two mugs and a fork, arranged with the optimism of people who think they'll get to it.",
+    dryer:"A hair dryer with a cracked nozzle. In this flat it has exactly one job and it isn't hair.",
+    outlet:"A wall socket. Dead unless something upstream is alive.",
+    mirror:"You look the way you feel: three humans, no thumbs of steel, one cat too many.",
+    tub:"Dry. The cat is banned from it since it stopped fitting.",
+    door:"A door. It leads somewhere with fewer problems."
+  },
+  act:{
+    fuseNoPower:"{who} reaches up. Fingertips find air. The box is a hand's width too high.",
+    fuseOn:"Tank goes up on the balls of his feet, hooks the breaker and drags it down with a grunt. The fridge shudders, the lights come back, and the flat starts humming again.",
+    fuseDone:"The breaker is already down. Everything hums.",
+    dryerTake:"Vic unplugs the dryer and holds it out without a word.",
+    dryerDone:"Already carrying it.",
+    pantryNo:"{who} leans on the pantry door. It gives an inch and stops. The lentils win.",
+    pantryOn:"Tank puts a shoulder into the pantry and the door swings. A tin of tuna rolls out, rings against the tiles and settles.",
+    pantryDone:"The tuna is already out.",
+    tunaNo:"{who} picks at the ring pull with a fingernail. The tin sulks and stays shut.",
+    tunaOn:"Tank twists the ring, swears once, and the tin pops. The smell arrives before the sound does.",
+    tunaDone:"Already open. The smell has made itself at home.",
+    freezerNoHeat:"The ice doesn't care about fingernails. It needs heat — the hair dryer, from the bathroom.",
+    freezerNoPower:"The dryer is dead. There's no power in the flat.",
+    freezerOn:"Vic aims the dryer along the seal. The frost hisses, cracks, runs, and the lid drops open on its hinge.",
+    freezerNoTuna:"Open and cold — but the cat is still in the other room, and it doesn't move for nothing.",
+    freezerDone:"Already in there, going stiff.",
+    tunaIn:"Tank drops the tuna in the freezer. Out in the living room, something enormous stops walking to sniff the air.",
+    vacuumNoPower:"The laptop is dead without power.",
+    vacuumNo:"{who} presses keys at random. The screen blinks, unimpressed. Wes knows the sequence.",
+    vacuumOn:"Wes types something absurd and slightly rude. Rosie chirps off her dock, turns twice, and starts doing laps. The cat's ears go flat.",
+    vacuumDone:"Rosie is circling. Cats everywhere approve.",
+    calmNo:"{who} approaches. The cat lifts a paw the size of a dinner plate and holds it there, politely threatening.",
+    calmNeedTuna:"Vic crouches and slow-blinks. The cat blinks back — but it isn't going anywhere without a reason. The tuna first.",
+    calmOn:"Vic crouches, exhales, and slow-blinks once. The cat slow-blinks back, drops off the tank and walks — nose up, straight past you, straight toward the smell, into the kitchen.",
+    calmDone:"It's in the kitchen already, nose buried in the freezer.",
+    talk:"{who} says something calm and reasonable. The flat, as ever, keeps its own counsel.",
+    nothing:"{who} tries the {what}. Nothing gives.",
+    beastNotHere:"The cat isn't in this room."
+  },
+  hints:[
+    "No power. The fuse box is in the hallway, too high for anyone but Tank.",
+    "The hair dryer is in the bathroom. Take it.",
+    "Aim the hair dryer at the freezer seal.",
+    "Tank can open the pantry. And the tin.",
+    "Put the open tuna in the open freezer.",
+    "Wes can wake Rosie from the laptop.",
+    "Vic can calm the cat — but only once the tuna is in the freezer.",
+    "The cat is in the kitchen. Use the freezer to bring the lid down."
+  ],
+  winTitle:"CAT, FROZEN",
+  winText:"The lid comes down. Rosie bumps into it, loyal and stupid, and keeps bumping. Inside, an enormous shape goes stiff and small.",
+  winText2:"The three of you sit down on the kitchen tiles to watch the frost crawl back across the lid — the way people sit outside an operating theatre, hands empty, waiting to be told.",
+  winSteps:"Done in {n} actions.",
+  again:"PLAY AGAIN",
+  winLog:"The lid comes down on a very large cat. Nobody breathes for a moment."
+},
+es: {
+  title:"NOCHE DEL GATO MUTANTE", sub:"un departamento, tres humanos, un problema enorme",
+  hint:"PISTA", meter:"EL GATO", invlabel:"INVENTARIO (elige un objeto y después un blanco)",
+  verbs:{WALK:"IR",LOOK:"MIRAR",TAKE:"TOMAR",USE:"USAR",OPEN:"ABRIR",TALK:"HABLAR"},
+  ab:{wes:"HACKEAR",tank:"LEVANTAR",vic:"CALMAR"},
+  walkHint:" — haz clic en el piso o en una puerta",
+  crew:{ wes:["WES","Hackea","lee manuales por gusto"], tank:["TANK","Levanta","mueve cosas pesadas, incluido él"], vic:["DRA. VIC","Calma","estudiante de veterinaria, paciencia infinita"] },
+  start:`<h1>NOCHE DEL GATO MUTANTE</h1>
+    <p>El gato bebió del acuario hace cuatro horas. No ha dejado de crecer desde entonces, y ahora llena el vano de la sala: tranquilo, enorme y sin la menor intención de disculparse.</p>
+    <p>Ustedes tres tienen un freezer, una noche y ningún plan.</p>
+    <div class="cast">
+      <div><b>WES</b>hackea cosas</div><div><b>TANK</b>levanta cosas</div><div><b>DRA. VIC</b>calma animales</div>
+    </div>
+    <p style="font-size:11px;color:#8d7fa0">Ninguno puede hacer el trabajo del otro. Ese es todo el juego. Elige un verbo y después haz clic en la cosa.</p>
+    <button class="lang" data-lang="en">PLAY IN ENGLISH</button><button class="lang" data-lang="es">JUGAR EN ESPAÑOL</button>`,
+  intro:"No tardó. El departamento está tibio, el acuario brilla verde y algo del tamaño de un labrador ya se está sacando del agua.",
+  rooms:{
+    living:{n:"LA SALA", d:"El sofá tiene tres hundimientos y la tele muestra un menú que nadie eligió. Entre el sofá y la ventana, el acuario tirita y burbujea — y el gato que bebió de él ocupa más piso que hace diez minutos."},
+    hall:{n:"EL PASILLO", d:"Tres puertas y una franja de alfombra gastada en forma de camino. La caja de fusibles está alta, con la palanca abajo, y el departamento tiene ese silencio particular de las cosas que dejaron de funcionar."},
+    kitchen:{n:"LA COCINA", d:"Baldosas frías, un fregadero con dos tazas y una despensa que no se cierra bien desde la primavera. El arcón congelador ocupa la pared del fondo bajo una tapa de escarcha dura."},
+    bathroom:{n:"EL BAÑO", d:"Chico, celeste, azulejado hasta el hombro. Un espejo que evitás, una bañera que no usás y un secador de pelo colgado de su propio cable, como pensándolo."}
+  },
+  hs:{
+    beast:"el gato", tank:"acuario", sofa:"sofá", laptop:"la laptop de Wes", vacuum:"aspiradora robot", doorL:"pasillo",
+    fuse:"caja de fusibles", doorLiv:"sala", doorKit:"cocina", doorBath:"baño",
+    pantry:"despensa", freezer:"congelador", sink:"fregadero", doorHall:"pasillo",
+    dryer:"secador de pelo", outlet:"enchufe", mirror:"espejo", tub:"bañera"
+  },
+  look:{
+    beast:"Te mira como el clima mira un picnic. En algún lugar debajo de todo ese pelo sigue el animal que entraba en un almohadón.",
+    beastGone:"Se fue a la cocina. Se le oye respirar contra las baldosas.",
+    tank:"El acuario del que bebió. Vacío, verde, todavía un poco radiactivo. Dos sobrevivientes dan vueltas en el fondo, guardándose la opinión.",
+    sofa:"Tres hundimientos en los almohadones, uno por persona, asignados hace años y nunca renegociados.",
+    laptop:"La laptop de Wes. Abierta, tibia, con la misma planilla a medio hacer.",
+    vacuum:"Rosie, muerta en su base. Wes le puso nombre. Wes es la razón de que tenga nombre.",
+    fuse:"La palanca general, abajo, atornillada a la pared un palmo por encima de la cabeza de Tank. Alguien escribió NO TOCAR con lápiz.",
+    pantry:"Latas, alimento seco y el atún al fondo, detrás de las lentejas, donde alguien lo escondió de alguien.",
+    freezer:"La tapa está pegada por el hielo: dos dedos de escarcha alrededor del burlete. Haría falta calor de verdad, no raspar.",
+    freezerOpen:"Abierto, frío, soplando una niebla fina sobre las baldosas.",
+    sink:"Dos tazas y un tenedor, acomodados con el optimismo de quien cree que va a llegar.",
+    dryer:"Un secador con la boquilla rajada. En este departamento tiene un solo trabajo y no es el pelo.",
+    outlet:"Un enchufe de pared. Muerto, salvo que algo aguas arriba esté vivo.",
+    mirror:"Te ves como te sentís: tres humanos, ningún pulgar de acero, un gato de más.",
+    tub:"Seca. El gato está prohibido desde que dejó de entrar.",
+    door:"Una puerta. Lleva a algún lado con menos problemas."
+  },
+  act:{
+    fuseNoPower:"{who} estira el brazo. Los dedos encuentran aire. La caja está un palmo más arriba de lo alcanzable.",
+    fuseOn:"Tank se alza en las puntas, engancha la palanca con un dedo y la baja tirando. La refrigerador se sacude, vuelve la luz y el departamento entero empieza a zumbar.",
+    fuseDone:"La palanca ya está abajo. Todo zumba.",
+    dryerTake:"Vic desenchufa el secador y lo alcanza sin decir nada.",
+    dryerDone:"Ya lo tenés en la mano.",
+    pantryNo:"{who} se apoya en la puerta de la despensa. Cede un centímetro y se traba. Las lentejas ganan.",
+    pantryOn:"Tank le pone el hombro a la despensa y la puerta se abre. Una lata de atún rueda, tintinea contra las baldosas y se detiene.",
+    pantryDone:"El atún ya está afuera.",
+    tunaNo:"{who} raspa la anilla con la uña. La lata se ofende y no se abre.",
+    tunaOn:"Tank gira la anilla, maldice una vez y la lata salta. El olor llega antes que el ruido.",
+    tunaDone:"Ya está abierta. El olor se instaló.",
+    freezerNoHeat:"Al hielo le dan igual las uñas. Necesita calor: el secador del baño.",
+    freezerNoPower:"El secador está muerto. No hay luz en el departamento.",
+    freezerOn:"Vic apunta el secador por el burlete. La escarcha chilla, se raja, corre, y la tapa cae abierta sobre su bisagra.",
+    freezerNoTuna:"Abierto y frío — pero el gato sigue en el otro cuarto y no se mueve por nada.",
+    freezerDone:"Ya está adentro, poniéndose rígido.",
+    tunaIn:"Tank tira el atún dentro del congelador. En la sala, algo enorme deja de caminar para olfatear el aire.",
+    vacuumNoPower:"La laptop está muerta sin luz.",
+    vacuumNo:"{who} aprieta teclas al azar. La pantalla parpadea, sin impresionarse. Wes sabe la secuencia.",
+    vacuumOn:"Wes escribe algo absurdo y apenas grosero. Rosie pía, se baja de la base, gira dos veces y arranca a dar vueltas. Al gato se le aplastan las orejas.",
+    vacuumDone:"Rosie da vueltas. Los gatos del barrio aprueban.",
+    calmNo:"{who} se acerca. El gato levanta una pata del tamaño de un plato y la sostiene ahí, amenazando con educación.",
+    calmNeedTuna:"Vic se agacha y parpadea lento. El gato le devuelve el parpadeo — pero no va a ir a ningún lado sin motivo. Primero el atún.",
+    calmOn:"Vic se agacha, exhala y parpadea lento una vez. El gato le devuelve el parpadeo, se baja del acuario y camina — nariz arriba, pasando a tu lado, derecho al olor, a la cocina.",
+    calmDone:"Ya está en la cocina, con la nariz metida en el congelador.",
+    talk:"{who} dice algo tranquilo y razonable. El departamento, como siempre, se guarda su opinión.",
+    nothing:"{who} prueba con {what}. No pasa nada.",
+    beastNotHere:"El gato no está en este cuarto."
+  },
+  hints:[
+    "No hay luz. La caja de fusibles está en el pasillo, demasiado alta para todos menos Tank.",
+    "El secador está en el baño. Tómalo.",
+    "Apunta el secador al burlete del congelador.",
+    "Tank puede abrir la despensa. Y la lata.",
+    "Pon el atún abierto dentro del congelador abierto.",
+    "Wes puede despertar a Rosie desde la laptop.",
+    "Vic puede calmar al gato — pero solo con el atún ya en el congelador.",
+    "El gato está en la cocina. Usa el congelador para bajar la tapa."
+  ],
+  winTitle:"GATO, CONGELADO",
+  winText:"La tapa baja. Rosie la choca, leal y tonta, y sigue chocando. Adentro, una forma enorme se pone rígida y chica.",
+  winText2:"Ustedes tres se sientan en las baldosas a mirar cómo la escarcha vuelve a subir por la tapa — como se espera afuera de un quirófano, con las manos vacías, a que alguien venga a decir algo.",
+  winSteps:"Resuelto en {n} acciones.",
+  again:"JUGAR OTRA VEZ",
+  winLog:"La tapa baja sobre un gato enorme. Nadie respira por un momento."
+}};
+
+let L = "en";
+const t = () => T[L];
+const fmt = (s, o) => s.replace(/\{(\w+)\}/g, (_, k) => o[k] ?? "");
+
+/* ======================= STATE ======================= */
+const CREW = { wes:{}, tank:{}, vic:{} };
+const ABIL = { wes:"HACK", tank:"LIFT", vic:"CALM" };
+const state = { cat:"wes", room:"living", verb:"WALK", item:null, power:false, freezerOpen:false,
+  tunaOpen:false, tunaInFreezer:false, vacuumOn:false, catInKitchen:false, calmed:false,
+  taken:{}, steps:0, won:false, started:false };
+
+const el = id => document.getElementById(id);
+const say = html => el("log").innerHTML = html;
+const step = () => { state.steps++; el("barfill").style.width = Math.min(100, state.steps*4)+"%"; };
+const rect = (x,y,w,h,f,e="") => `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${f}" ${e}/>`;
+const glow = (x,y,w,h) => `<rect class="glow" x="${x}" y="${y}" width="${w}" height="${h}" fill="#ffffff" opacity="0"/>`;
+
+function personSVG(who){
+  const P = { wes:["#2f4a72","#1f2c44","#e0b389","#2a1d16"], tank:["#a85f27","#33333c","#c98d63","#22222a"], vic:["#2b6f67","#243b3c","#e0b389","#3f271b"] };
+  const [shirt, trouser, skin, hair] = P[who];
+  const wide = who==="tank";
+  const L = wide ? 1 : 2, R = wide ? 6 : 5;
+  let s = "";
+  // legs
+  s += rect(L,18,2,4,trouser) + rect(R,18,2,4,trouser);
+  s += rect(L-1,21,3,1,"#111016") + rect(R-1,21,3,1,"#111016");
+  // torso
+  s += rect(wide?1:2,8,wide?8:6,10,shirt);
+  // arms
+  s += rect(wide?0:1,9,1,6,shirt) + rect(wide?9:7,9,1,6,shirt);
+  s += rect(wide?0:1,15,1,1,skin) + rect(wide?9:7,15,1,1,skin);
+  // head
+  s += rect(wide?2:3,3,wide?6:4,5,skin);
+  // hair
+  s += rect(wide?2:3,2,wide?6:4,1,hair);
+  if(who==="vic") s += rect(6,2,1,3,hair);
+  // eyes
+  s += rect(wide?3:4,5,1,1,"#141018") + rect(wide?6:5,5,1,1,"#141018");
+  return s;
+}
+
+/* ======================= ROOMS ======================= */
+const ROOMS = {
+  living:{ exits:{doorL:"hall"}, hotspots:[
+    {id:"tank",b:[78,100,62,30]},
+    {id:"beast",b:[86,34,54,70]},
+    {id:"sofa",b:[8,118,92,42]},
+    {id:"laptop",b:[126,136,26,16]},
+    {id:"vacuum",b:[203,163,28,20]},
+    {id:"doorL",b:[282,55,36,78],walk:true} ],
+    art:()=>`${rect(0,0,320,120,"#2b1b3d")}${rect(0,0,320,6,"#1c1128")}
+      ${rect(0,118,320,82,"#4a2f3d")}${rect(0,118,320,2,"#593a4a")}
+      ${[0,1,2].map(i=>rect(0,140+i*20,320,1,"#553646")).join("")}
+      ${rect(20,18,52,34,"#3d2a52")}${rect(24,22,44,26,"#5b4074")}
+      ${rect(28,30,36,1,"#2b1b3d")}${rect(28,36,28,1,"#2b1b3d")}
+      ${rect(215,14,86,58,"#241a33")}${rect(219,18,78,50,"#3f6fa8")}
+      ${rect(219,18,78,16,"#4d80bd")}${rect(256,18,2,50,"#241a33")}${rect(219,42,78,2,"#241a33")}
+      ${rect(300,16,1,54,"#6d4a5c")}
+      <g>${rect(78,62,62,66,"#1c2b30")}${rect(82,66,54,58,"#356f6a")}${rect(82,66,54,8,"#2f5a63")}
+        ${state.catInKitchen?"":`${rect(112,96,6,22,"#b98a54")}${rect(100,72,26,20,"#b98a54")}${rect(100,72,26,4,"#a97c47")}
+          ${rect(101,60,10,10,"#d4a86e")}${rect(101,58,3,3,"#c9955f")}${rect(108,58,3,3,"#c9955f")}
+          ${rect(103,63,1,1,"#1e2a1c")}${rect(107,63,1,1,"#1e2a1c")}${rect(104,66,3,1,"#8d6a44")}
+          ${rect(112,110,3,8,"#8d6a44")}`}
+        ${rect(92,112,6,3,"#d98b3f")}${rect(122,116,5,2,"#c7b26a")}
+      </g>${rect(76,60,66,4,"#121c21")}
+      <g>${rect(8,140,92,20,"#6d4a5c")}${rect(8,118,92,22,"#7d5768")}${rect(8,132,6,28,"#8a6274")}${rect(94,132,6,28,"#8a6274")}
+        ${rect(12,124,84,4,"#94596e")}</g>
+      ${rect(112,150,58,4,"#6b4a2e")}${rect(114,154,3,12,"#4f3722")}${rect(165,154,3,12,"#4f3722")}
+      ${rect(126,138,24,12,"#8f96a0")}${rect(129,140,18,8,"#2b3a4d")}${rect(125,150,26,2,"#a9b0b8")}
+      ${rect(203,172,26,6,"#3a3444")}${rect(207,163,18,10,"#4d4658")}${rect(213,167,4,3,state.vacuumOn?"#8ef0c4":"#5c5468")}
+      ${rect(282,55,36,75,"#4a3327")}${rect(285,58,30,69,"#6b4a2e")}${rect(308,92,2,4,"#d8b25c")}`
+  },
+  hall:{ exits:{doorLiv:"living",doorKit:"kitchen",doorBath:"bathroom"}, hotspots:[
+    {id:"fuse",b:[180,20,38,36]},
+    {id:"doorLiv",b:[12,45,40,92],walk:true},
+    {id:"doorKit",b:[130,45,40,92],walk:true},
+    {id:"doorBath",b:[260,45,40,92],walk:true} ],
+    art:()=>`${rect(0,0,320,118,"#241b2e")}${rect(0,0,320,6,"#171020")}
+      ${rect(0,118,320,82,"#3d2c38")}${rect(0,118,320,2,"#4a3644")}
+      ${rect(0,150,320,1,"#4a3644")}${rect(0,175,320,1,"#4a3644")}
+      ${rect(12,45,40,92,"#4a3327")}${rect(15,48,34,86,"#6b4a2e")}${rect(44,88,2,4,"#d8b25c")}
+      ${rect(130,45,40,92,"#4a3327")}${rect(133,48,34,86,"#6b4a2e")}${rect(162,88,2,4,"#d8b25c")}
+      ${rect(260,45,40,92,"#2c4a4f")}${rect(263,48,34,86,"#3f6b70")}${rect(292,88,2,4,"#cfe6ea")}
+      ${rect(180,22,38,30,"#3c3c46")}${rect(184,26,30,22,"#6e6e7a")}
+      ${rect(188,32,5,5,state.power?"#5fbf7a":"#2f5440")}${rect(196,32,5,5,"#6d3a3a")}${rect(204,32,5,5,"#3a4468")}
+      ${rect(186,42,26,2,"#4a4a54")}
+      ${rect(172,54,52,2,"#4a3644")}
+      ${rect(96,160,30,3,"#4a3644")}${rect(210,168,24,2,"#4a3644")}`
+  },
+  kitchen:{ exits:{doorHall:"hall"}, hotspots:[
+    {id:"pantry",b:[20,40,38,66]},
+    {id:"freezer",b:[198,104,94,44]},
+    {id:"sink",b:[100,92,32,20]},
+    {id:"doorHall",b:[278,50,38,80],walk:true} ],
+    art:()=>`${rect(0,0,320,118,"#1e2a26")}${rect(0,0,320,6,"#131e1a")}
+      ${rect(0,118,320,82,"#2d3a34")}${rect(0,118,320,2,"#3a4a43")}
+      ${[0,1,2].map(i=>rect(0,140+i*20,320,1,"#364640")).join("")}
+      ${rect(0,100,320,14,"#44544c")}${rect(0,114,320,3,"#2a3630")}
+      ${rect(20,40,38,60,"#4a3024")}${rect(23,43,32,54,"#6b4835")}${rect(37,43,4,54,"#3a2419")}
+      ${rect(30,80,2,4,"#c9a06a")}
+      ${rect(200,108,90,37,"#7f97a7")}${rect(203,111,84,12,"#c3d6e2")}${rect(203,124,84,18,state.freezerOpen?"#cfe6f2":"#9fb8c6")}
+      ${rect(232,114,24,4,"#5d7484")}
+      ${state.freezerOpen?"":`${rect(203,124,84,2,"#e8f4fa")}${rect(210,127,70,1,"#e8f4fa")}`}
+      ${state.catInKitchen?`<g>${rect(150,132,34,22,"#b98a54")}${rect(150,132,34,4,"#a97c47")}
+        ${rect(146,124,14,12,"#d4a86e")}${rect(146,120,4,4,"#c9955f")}${rect(155,120,4,4,"#c9955f")}
+        ${rect(149,128,1,1,"#1e2a1c")}${rect(154,128,1,1,"#1e2a1c")}${rect(151,131,2,1,"#8d6a44")}
+        ${rect(184,120,4,10,"#b98a54")}${rect(186,116,4,4,"#b98a54")}</g>`:""}
+      ${rect(100,96,32,10,"#6b7c85")}${rect(104,99,24,6,"#41525c")}${rect(114,90,3,7,"#9fb0bd")}
+      ${rect(278,50,38,80,"#4a3327")}${rect(281,53,32,74,"#6b4a2e")}${rect(306,86,2,4,"#d8b25c")}`
+  },
+  bathroom:{ exits:{doorHall:"hall"}, hotspots:[
+    {id:"dryer",b:[64,94,32,14]},
+    {id:"outlet",b:[106,86,22,16]},
+    {id:"mirror",b:[118,20,64,44]},
+    {id:"tub",b:[208,98,90,44]},
+    {id:"doorHall",b:[20,50,38,80],walk:true} ],
+    art:()=>`${rect(0,0,320,118,"#1c2531")}${rect(0,0,320,6,"#121a24")}
+      ${[0,1,2,3,4,5,6].map(i=>rect(0,20+i*16,320,1,"#243040")).join("")}
+      ${[0,1,2,3].map(i=>rect(i*80,20,1,98,"#243040")).join("")}
+      ${rect(0,118,320,82,"#2b3542")}${rect(0,118,320,2,"#37424f")}
+      ${rect(118,20,64,44,"#3d4b5a")}${rect(122,24,56,36,"#5d7386")}${rect(150,24,1,36,"#42525f")}
+      ${rect(130,92,38,12,"#7d8f9e")}${rect(134,95,30,7,"#46596a")}${rect(146,86,3,7,"#9fb0bd")}
+      ${state.taken.dryer
+        ? `${rect(66,102,20,4,"#3a2f47")}${rect(60,102,6,2,"#3a2f47")}`
+        : `${rect(66,96,20,8,"#c1443a")}${rect(84,94,8,12,"#a83a31")}${rect(62,98,4,4,"#3a2f47")}${rect(56,100,6,2,"#3a2f47")}`}
+      ${rect(210,100,86,40,"#7f8f9c")}${rect(214,104,78,32,"#c6d4dd")}${rect(214,104,78,3,"#e2eaf0")}
+      ${rect(108,88,20,14,"#4a5866")}${rect(112,92,5,5,"#1c2531")}${rect(119,92,5,5,"#1c2531")}
+      ${rect(20,50,38,80,"#4a3327")}${rect(23,53,32,74,"#6b4a2e")}${rect(48,86,2,4,"#d8b25c")}`
+  }
+};
+
+const ICONS = {
+  dryer:`<svg viewBox="0 0 40 40">${rect(6,16,20,10,"#d9503f")}${rect(24,13,10,16,"#b8422f")}${rect(2,18,6,6,"#3a2f47")}</svg>`,
+  tuna:`<svg viewBox="0 0 40 40"><ellipse cx="20" cy="22" rx="12" ry="9" fill="#b9c4cc"/><ellipse cx="20" cy="22" rx="10" ry="7" fill="#8a97a1"/><rect x="13" y="19" width="14" height="5" fill="#d9a441"/></svg>`
+};
+
+/* ======================= RENDER ======================= */
+const stage = el("stage");
+const who = () => t().crew[state.cat][0];
+const what = id => t().hs[id] || id;
+
+function renderCrew(){
+  el("crew").innerHTML = Object.keys(CREW).map(k=>{
+    const [n,a,b] = t().crew[k];
+    return `<button class="crewbtn ${state.cat===k?"on":""}" data-cat="${k}">
+      <svg viewBox="0 0 34 56">${personSVG(k)}</svg>
+      <span><span class="nm">${n}</span><span class="ab">${a} · ${b}</span></span></button>`;
+  }).join("");
+  el("crew").querySelectorAll(".crewbtn").forEach(b=>b.onclick=()=>{
+    state.cat=b.dataset.cat; state.item=null; state.verb="WALK"; renderAll();
+  });
+}
+
+function renderVerbs(){
+  const ab = ABIL[state.cat];
+  const list = ["WALK","LOOK","TAKE","USE","OPEN","TALK",ab];
+  el("verbs").innerHTML = list.map((v,i)=>{
+    const label = i===6 ? t().ab[state.cat] : t().verbs[v];
+    return `<button class="verb ${i===6?"ability":""} ${state.verb===v?"sel":""}" data-v="${v}">${label}</button>`;
+  }).join("");
+  el("verbs").querySelectorAll(".verb").forEach(b=>b.onclick=()=>{
+    state.verb = state.verb===b.dataset.v ? "WALK" : b.dataset.v;
+    if(!["USE","LIFT","HACK","CALM"].includes(state.verb)) state.item=null;
+    renderAll();
+  });
+}
+
+function renderInv(){
+  const items = Object.keys(state.taken);
+  el("inv").innerHTML = items.length
+    ? items.map(i=>`<div class="slot ${state.item===i?"sel":""}" data-i="${i}">${ICONS[i]||""}</div>`).join("")
+    : `<div style="color:#5f536e;font-size:11px;align-self:center">—</div>`;
+  el("inv").querySelectorAll(".slot").forEach(s=>s.onclick=()=>{
+    const i = s.dataset.i;
+    if(state.item===i){
+      const act = ACTIONS[`${i}|${state.verb}`];
+      if(act && state.verb!=="USE"){ act(); return; }
+      state.item=null; renderAll(); return;
+    }
+    state.item=i; state.verb="USE"; renderAll();
+  });
+}
+
+function renderSentence(){
+  el("sentence").innerHTML = state.item
+    ? `<b>${state.verb==="USE"?t().verbs.USE:state.verb}</b> ${what(state.item)} →`
+    : `<b>${state.verb==="WALK"?t().verbs.WALK:(t().verbs[state.verb]||state.verb)}</b> · ${who()}${state.verb==="WALK"?t().walkHint:""}`;
+}
+
+function renderScene(){
+  stage.innerHTML = ROOMS[state.room].art();
+  el("roomname").textContent = t().rooms[state.room].n;
+  el("barfill").style.width = Math.min(100, state.steps*4)+"%";
+
+  if(!state.won){
+    const g = document.createElementNS("http://www.w3.org/2000/svg","g");
+    g.setAttribute("id","actor");
+    g.setAttribute("pointer-events","none");
+    g.setAttribute("transform",`translate(${state.room==="living"?150:200},154) scale(1.15)`);
+    g.innerHTML = personSVG(state.cat);
+    stage.appendChild(g);
+  }
+
+  ROOMS[state.room].hotspots.forEach(h=>{
+    if(h.id==="beast" && state.catInKitchen) return;
+    const g = document.createElementNS("http://www.w3.org/2000/svg","g");
+    g.setAttribute("class","hs"); g.dataset.hs = h.id;
+    g.innerHTML = glow(...h.b);
+    g.addEventListener("click", e=>{ e.stopPropagation(); click(h); });
+    g.addEventListener("mouseenter", ()=>{ if(!state.item) el("sentence").innerHTML = `<b>${t().verbs[state.verb]||state.verb}</b> · ${what(h.id)}`; });
+    stage.appendChild(g);
+  });
+  stage.onclick = walkTo;
+}
+
+function walkTo(e){
+  const g = el("actor"); if(!g) return;
+  const r = stage.getBoundingClientRect();
+  const x = Math.max(16, Math.min(296, (e.clientX-r.left)/r.width*320));
+  g.style.transition = "transform .3s";
+  g.setAttribute("transform",`translate(${x},154) scale(1.15)`);
+}
+
+const renderAll = () => { if(!state.started) return; renderCrew(); renderVerbs(); renderInv(); renderSentence(); renderScene(); };
+
+/* ======================= LOGIC ======================= */
+function look(id){
+  if(id==="beast" && state.catInKitchen) return t().look.beastGone;
+  if(id==="freezer" && state.freezerOpen) return t().look.freezerOpen;
+  return t().look[id] || t().look.door;
+}
+
+function click(h){
+  if(state.won) return;
+  if(h.walk){ const d = ROOMS[state.room].exits[h.id]; if(d) go(d); return; }
+  if(state.verb==="WALK"){
+    const g = el("actor");
+    if(g){ g.style.transition="transform .3s"; g.setAttribute("transform",`translate(${h.b[0]+h.b[2]/2},436) scale(1.45)`); }
+    return;
+  }
+  if(state.verb==="LOOK"){ say(look(h.id)); return; }
+  const res = ACTIONS[`${h.id}|${state.verb}`] || ACTIONS[`${h.id}|USE`];
+  if(res){ res(); return; }
+  if(state.verb==="TALK"){ say(fmt(t().act.talk,{who:who()})); return; }
+  say(fmt(t().act.nothing,{who:who(), what:what(h.id)}));
+  step();
+}
+
+const ACTIONS = {
+  "fuse|LIFT": fuse, "fuse|USE": fuse,
+  "dryer|TAKE": ()=>{ if(state.taken.dryer) return say(t().act.dryerDone);
+    state.taken.dryer=true; state.taken.dryerTaken=true; step(); say(t().act.dryerTake); renderAll(); },
+  "pantry|OPEN": tuna, "pantry|USE": tuna,
+  "tuna|LIFT": ()=>{ if(state.tunaOpen) return say(t().act.tunaDone);
+    if(state.cat!=="tank") return say(fmt(t().act.tunaNo,{who:who()}));
+    state.tunaOpen=true; step(); say(t().act.tunaOn); renderAll(); },
+  "freezer|USE": ()=>{
+    if(state.item==="tuna"){
+      if(!state.freezerOpen) return say(t().act.freezerNoHeat);
+      if(state.tunaInFreezer) return say(t().act.freezerDone);
+      state.tunaInFreezer=true; delete state.taken.tuna; state.item=null; step(); say(t().act.tunaIn); renderAll(); return;
+    }
+    if(state.freezerOpen){
+      if(!state.catInKitchen) return say(t().act.freezerNoTuna);
+      state.won=true; step(); win(); return;
+    }
+    if(!state.taken.dryer) return say(t().act.freezerNoHeat);
+    if(!state.power) return say(t().act.freezerNoPower);
+    state.freezerOpen=true; step(); say(t().act.freezerOn); renderAll();
+  },
+  "freezer|OPEN": ()=>ACTIONS["freezer|USE"](),
+  "laptop|HACK": vac, "laptop|USE": vac,
+  "beast|CALM": calm, "beast|USE": calm,
+  "beast|TALK": ()=>say(state.catInKitchen ? t().act.calmDone : t().act.beastNotHere),
+  "vacuum|USE": ()=>say(state.vacuumOn ? t().act.vacuumDone : t().act.vacuumNoPower)
+};
+
+function fuse(){
+  if(state.power) return say(t().act.fuseDone);
+  if(state.cat!=="tank") return say(fmt(t().act.fuseNoPower,{who:who()}));
+  state.power=true; step(); say(t().act.fuseOn); renderAll();
+}
+function tuna(){
+  if(state.taken.tuna) return say(t().act.pantryDone);
+  if(state.cat!=="tank") return say(fmt(t().act.pantryNo,{who:who()}));
+  state.taken.tuna=true; step(); say(t().act.pantryOn); renderAll();
+}
+function vac(){
+  if(state.vacuumOn) return say(t().act.vacuumDone);
+  if(!state.power) return say(t().act.vacuumNoPower);
+  if(state.cat!=="wes") return say(fmt(t().act.vacuumNo,{who:who()}));
+  state.vacuumOn=true; step(); say(t().act.vacuumOn); renderAll();
+}
+function calm(){
+  if(state.catInKitchen) return say(t().act.calmDone);
+  if(state.cat!=="vic") return say(fmt(t().act.calmNo,{who:who()}));
+  if(!state.tunaInFreezer) return say(t().act.calmNeedTuna);
+  state.calmed=true; state.catInKitchen=true; step(); say(t().act.calmOn); renderAll();
+}
+
+function go(room){
+  if(state.won) return;
+  state.room=room; state.item=null; state.verb="WALK"; step();
+  say(`${t().rooms[room].n}<em>${t().rooms[room].d}</em>`);
+  renderAll();
+}
+
+function win(){
+  say(t().winLog);
+  el("overlay").classList.add("on");
+  el("card").innerHTML = `<h1>${t().winTitle}</h1><p>${t().winText}</p><p>${t().winText2}</p>
+    <p style="color:#8d7fa0;font-size:11px;margin-top:14px">${fmt(t().winSteps,{n:state.steps})}</p>
+    <button id="again">${t().again}</button>`;
+  el("again").onclick = ()=>location.reload();
+}
+
+el("hintBtn").onclick = ()=>{
+  const h = (()=>{
+    const k = t().hints;
+    if(!state.power) return k[0];
+    if(!state.taken.dryer) return k[1];
+    if(!state.freezerOpen) return k[2];
+    if(!state.taken.tuna) return k[3];
+    if(!state.tunaInFreezer) return k[4];
+    if(!state.vacuumOn) return k[5];
+    if(!state.calmed) return k[6];
+    return k[7];
+  })();
+  say("💡 " + h);
+};
+
+/* ======================= BOOT ======================= */
+el("card").innerHTML = T.en.start;
+el("card").querySelectorAll(".lang").forEach(b=>b.onclick=()=>start(b.dataset.lang));
+
+function start(lang){
+  L = lang;
+  document.documentElement.lang = L;
+  el("tTitle").textContent = t().title;
+  el("tSub").textContent = t().sub;
+  el("tHint").textContent = t().hint;
+  el("tMeter").textContent = t().meter;
+  el("invlabel").textContent = t().invlabel;
+  el("overlay").classList.remove("on");
+  state.started = true;
+  say(`${t().rooms.living.n}<em>${t().intro}</em>`);
+  renderAll();
+}
+</script>
+<script type="module" src="game.tsx"></script>
+</body>
+</html>

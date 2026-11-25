@@ -1,0 +1,24 @@
+{
+  "$schema": "https://developers.reddit.com/schema/config-file.v1.json",
+  "name": "mutant-cat-daily",
+  "post": {
+    "dir": "dist/client",
+    "entrypoints": {
+      "default": { "inline": true, "entry": "splash.html" },
+      "game": { "entry": "game.html" }
+    }
+  },
+  "server": { "dir": "dist/server", "entry": "index.cjs" },
+  "menu": {
+    "items": [
+      {
+        "label": "Post today's Mutant Cat",
+        "description": "Create the daily Night of the Mutant Cat post",
+        "location": "subreddit",
+        "forUserType": "moderator",
+        "endpoint": "/internal/menu/post-create"
+      }
+    ]
+  },
+  "scripts": { "dev": "vite build --watch", "build": "vite build" }
+}
