@@ -11,3 +11,5 @@ A point-and-click puzzle for Reddit's Game of the Day Hackathon. Three flatmates
     npm install
     npm run build
     npm run dev    # devvit playtest, needs `npm run login`
+
+Source: https://github.com/standardp/night-of-the-mutant-cat
